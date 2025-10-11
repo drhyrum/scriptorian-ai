@@ -1,249 +1,125 @@
-This project consist of MCP server tooling that allows one to use Claude code as a scripture study tool.  It includes the following:
-- an expandable index that includes at a minimum the KJV Old Testament, KJV New Testmanet, Book of Mormon, Doctrine and Covenants, Pearl of Great Price
-- an MCP server for querying the scriptures that includes the following endpoints:
-  1. fetch a scripture reference from a natural language query (e.g., "1 ne 3:7-8") which looks up and returns two verses in standard format. This requires a plaintext reference parser
-  2. exact search for a string across all scriptures, returning the verse and a phrase in context (JSON)
-  3. semantic search for a string across al scriptures using a vector database, returning the verse and a phrase in context (JSON). [for this it might be useful to use a timy embedding model https://huggingface.co/NeuML/colbert-muvera-nano with only 970K params]
+# Scriptorian - MCP Server for Scripture Study
 
-Plain Text Reference Parser
-The plain text reference parser does it's best to take plain text strings like "Alma1-2;4-5:10;jas1:5-6" and return a programmatical response of the selected books, chapters, and verses. Which response can then be used to query for those selected books if desired.
+An open-source Model Context Protocol (MCP) server providing comprehensive scripture study tools with AI-powered semantic search.
 
-GET /referencesParser
-Required query parameters
-Name
-reference
-Type
-string
-Description
-The string that should be parsed
+## Project Overview
 
-Name
-api-key
-Type
-string
-Description
-The API Key associated with your account. Learn more at API Keys
+This is a production-ready MCP server that provides:
+- **Scripture fetching** with natural language references (e.g., "1 Ne 3:7-8", "Alma 32")
+- **Reference parsing** to convert text references to structured JSON
+- **Exact search** across all scriptures
+- **Semantic search** using AI embeddings for meaning-based queries
+- **Complete scripture data** for Old Testament, New Testament, Book of Mormon, Doctrine & Covenants, and Pearl of Great Price
 
-Response
-Name
-references
-Type
-array
-Description
-An array of book objects that were referenced in the reference string
+## Project Structure
 
-Name
-references[].book
-Type
-array
-Description
-The book id of the referenced book. This id can be used to obtain the book via the books endpoint
+```
+scriptorian/
+├── src/scriptorian/
+│   ├── server.py          # Main MCP server (stdio transport)
+│   ├── server_sse.py      # SSE server for hosted deployment
+│   ├── data_loader.py     # Scripture data loading
+│   ├── reference_parser.py # Natural language reference parser
+│   └── search.py          # Exact and semantic search
+├── data/
+│   ├── volumes.json       # Volume and book metadata
+│   └── scripture/         # Individual chapter JSON files (1594 files)
+├── tests/                 # Pytest test suite
+├── scripts/
+│   └── index_scriptures.py # Build vector database for semantic search
+└── vector_db/             # ChromaDB vector database (created at runtime)
+```
 
-Name
-references[].chapters
-Type
-array
-Description
-An array of chapter objects, which are the chapters referenced within the given book
+## Development Guidelines
 
-Name
-references[].chapters[].start
-Type
-number
-Description
-The starting chapter for this chapter segment
+### Running Locally
 
-Name
-references[].chapters[].end
-Type
-number
-Description
-The ending chapter for this chapter segment. Note: If only one chapter was referenced for this chapter segment, then the start and end values will be the same
+```bash
+# Run the stdio server (for Claude Desktop)
+uv run python -m scriptorian.server
 
-Name
-references[].chapters[].verses
-Type
-array
-Description
-An array of verse segments which were referenced for the end chapter. If no verses were referenced than this array will be empty
+# Run the SSE server (for hosted deployment)
+uv run python -m scriptorian.server_sse
 
-Name
-references[].chapters[].verses[].start
-Type
-number
-Description
-The starting verse for this verse segment
+# Run tests
+uv run pytest
 
-Name
-references[].chapters[].verses[].end
-Type
-number
-Description
-The ending verse for this verse segment. Note: If only one verse was referenced for this verse segment, then the start and end values will be the same
+# Index scriptures for semantic search
+uv run python scripts/index_scriptures.py
+```
 
-Name
-prettyString
-Type
-string
-Description
-A standardized string of the provided references, with correct spacing, etc.
+### MCP Tools Provided
 
-Name
-valid
-Type
-boolean
-Description
-A boolean value of whether the provide reference string was able to be parsed. If false an error attribute will be provided with details as to why the reference string couldn't be parsed
+1. **fetch_scripture** - Fetch verses from natural language references
+2. **parse_reference** - Parse reference strings to structured JSON
+3. **exact_search** - Exact string matching across all scriptures
+4. **semantic_search** - AI-powered semantic search (requires indexing)
+5. **index_scriptures** - Build vector database for semantic search
 
-Name
-error
-Type
-string
-Description
-If the valid attribute is false, this will be an error string of why the reference couldn't be parsed
+### Data Format
 
-Example response:
-Response for "Alma1-2;4-5:10;jas1:5-6"
-{
-  "references": [
-    {
-      "book": "alma",
-      "chapters": [
-        {
-          "start": 1,
-          "end": 2,
-          "verses": []
-        },
-        {
-          "start": 4,
-          "end": 5,
-          "verses": [
-            {
-              "start": 10,
-              "end": 10
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "book": "james",
-      "chapters": [
-        {
-          "start": 1,
-          "end": 1,
-          "verses": [
-            {
-              "start": 5,
-              "end": 6
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "prettyString": "Alma 1-2; 4:5-19; James 1:5-6",
-  "valid": true
-}
+Scripture data is in JSON format:
+- `data/volumes.json` - Volume and book metadata
+- `data/scripture/{book_id}.{chapter}.json` - Individual chapters
+  - Example: `205.3.json` = 1 Nephi chapter 3 (book ID 205)
 
+### Environment Variables
 
-{
-  "volumes": [
-    {
-      "_id": "oldtestament",
-      "title": "Old Testament"
-    },
-    {
-      "_id": "newtestament",
-      "title": "New Testament"
-    },
-    {
-      "_id": "bookofmormon",
-      "title": "Book of Mormon"
-    },
-    {
-      "_id": "doctrineandcovenants",
-      "title": "Doctrine and Covenants"
-    },
-    {
-      "_id": "pearlofgreatprice",
-      "title": "Pearl of Great Price"
-    }
-  ]
-}
+- `SCRIPTORIAN_DATA_PATH` - Custom path to scripture data (default: `./data`)
+- `SCRIPTORIAN_VECTOR_DB_PATH` - Custom path to vector DB (default: `./vector_db`)
+- `PORT` - Port for SSE server (default: 8000)
 
+## Deployment
 
-{
-  "_id": "1nephi",
-  "title": "1 Nephi",
-  "titleShort": "1 Ne",
-  "titleOfficial": "THE FIRST BOOK OF NEPHI",
-  "subtitle": "HIS REIGN AND MINISTRY",
-  "summary": "An account of Lehi and his wife Sariah, and his four sons, being called, (beginning at the eldest) Laman, Lemuel, Sam, and Nephi. ....  This is according to the account of Nephi; or in other words, I, Nephi, wrote this record.",
-  "chapterDelineation": "Chapter",
-  "chapters": [
-    {
-      "_id": "1nephi1",
-      "summary": "Nephi begins the record of his people—Lehi sees in vision a pillar of fire and reads from a book of prophecy—He praises God, foretells the coming of the Messiah, and prophesies the destruction of Jerusalem—He is persecuted by the Jews. About 600 B.C."
-    },
-    {
-      "_id": "1nephi2",
-      "summary": "Lehi takes his family into the wilderness by the Red Sea—They leave their property—Lehi offers a sacrifice to the Lord and teaches his sons to keep the commandments—Laman and Lemuel murmur against their father—Nephi is obedient and prays in faith; the Lord speaks to him, and he is chosen to rule over his brethren. About 600 B.C."
-    },
-    //...
-    {
-      "_id": "1nephi22",
-      "summary": "Israel will be scattered upon all the face of the earth—The Gentiles will nurse and nourish Israel with the gospel in the last days—Israel will be gathered and saved, and the wicked will burn as stubble—The kingdom of the devil will be destroyed, and Satan will be bound. About 588–570 B.C."
-    }
-  ]
-}
+This server supports two deployment modes:
 
+### Local (stdio)
+For Claude Desktop and local use. Uses standard input/output for MCP communication.
 
-{
-  "_id": "1nephi1",
-  "nextChapterId": "1nephi2",
-  "prevChapterId": "revelation22",
-  "volume": {
-    "title": "Book of Mormon",
-    "titleShort": "BoM",
-    "titleOfficial": "The Book of Mormon",
-    "_id": "bookofmormon"
-  },
-  "book": {
-    "title": "1 Nephi",
-    "titleShort": "1 Ne",
-    "titleOfficial": "THE FIRST BOOK OF NEPHI",
-    "subtitle": "HIS REIGN AND MINISTRY",
-    "summary": "An account of Lehi an ..., I, Nephi, wrote this record.",
-    "_id": "1nephi"
-  },
-  "chapter": {
-    "bookTitle": "1 Nephi",
-    "delineation": "Chapter",
-    "number": 1,
-    "summary": "Nephi begins the record of ... He is persecuted by the Jews. About 600 B.C.",
-    "chapterAugmentations": [],
-    "verses": [
-      {
-        "text": "I, Nephi, having been born of goodly parents, ...  in my days.",
-        "footNotes": [],
-        "italics": [],
-        "associatedContent": []
-      },
-      {
-        "text": "Yea, I make a record in the language of my father, which consists of the learning of the Jews and the language of the Egyptians.",
-        "footNotes": [],
-        "italics": [],
-        "associatedContent": []
-      },
-        // ...
-      {
-        "text": "And when the Jews ... of deliverance.",
-        "footNotes": [],
-        "italics": [],
-        "associatedContent": []
-      }
-    ]
-  }
-}
+### Hosted (SSE)
+For web deployment (Railway, Render, etc.). Uses Server-Sent Events over HTTP.
 
+See `DEPLOYMENT.md` for detailed deployment instructions.
+
+## Architecture Notes
+
+### Reference Parser
+Parses natural language references like:
+- Simple: "1 Ne 3:7"
+- Ranges: "Alma 32:21-23"
+- Multiple: "1 Ne 3:7; Alma 32:21"
+- Complex: "Alma 1-2;4-5:10;James 1:5-6"
+
+Returns structured JSON with book, chapter, and verse ranges.
+
+### Search System
+
+**Exact Search:**
+- Case-insensitive by default
+- Returns verse text with matched phrase in context
+
+**Semantic Search:**
+- Uses `sentence-transformers/all-MiniLM-L6-v2` (22M params, lightweight)
+- ChromaDB for vector storage
+- Returns verses ranked by semantic similarity
+
+### Testing
+
+Tests cover:
+- Reference parser (various formats)
+- Data loader (books, verses)
+- Search functionality (exact and semantic)
+
+Run with: `uv run pytest`
+
+## Contributing
+
+When contributing:
+1. Follow existing code style
+2. Add tests for new features
+3. Update documentation as needed
+4. Ensure all tests pass before submitting PR
+
+## License
+
+MIT License - see LICENSE file
