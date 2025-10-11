@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "scriptorian": {
+      "url": "https://scriptorian-ai.onrender.com/sse",
+      "headers": []
+    }
+  }
+}

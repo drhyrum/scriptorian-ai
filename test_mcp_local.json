@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "scriptorian": {
+      "command": "/Users/hyrum/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/hyrum/src/scriptorian",
+        "run",
+        "python",
+        "-m",
+        "scriptorian.server"
+      ]
+    }
+  }
+}
