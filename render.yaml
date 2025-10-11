@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: scriptorian
+    env: python
+    buildCommand: "pip install -e .[server]"
+    startCommand: "python -m scriptorian.server_sse"
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.10
