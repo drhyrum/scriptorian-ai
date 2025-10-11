@@ -21,8 +21,8 @@ An MCP (Model Context Protocol) server for scripture study, providing tools for 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/scriptorian.git
-cd scriptorian
+git clone https://github.com/drhyrum/scriptorian-ai.git
+cd scriptorian-ai
 
 # Install with uv (recommended)
 uv pip install -e .

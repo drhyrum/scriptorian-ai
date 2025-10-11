@@ -4,7 +4,7 @@
 
 1. Go to [railway.app](https://railway.app) and sign in
 2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your `scriptorian` repository
+3. Select your `scriptorian-ai` repository (https://github.com/drhyrum/scriptorian-ai)
 4. Railway will automatically detect the `railway.json` configuration
 5. Set environment variables (optional):
    - `SCRIPTORIAN_DATA_PATH`: Path to scripture data (default: ./data)
@@ -15,7 +15,7 @@
 
 1. Go to [render.com](https://render.com) and sign in
 2. Click "New" → "Web Service"
-3. Connect your `scriptorian` repository
+3. Connect your `scriptorian-ai` repository (https://github.com/drhyrum/scriptorian-ai)
 4. Render will automatically detect the `render.yaml` configuration
 5. Click "Create Web Service"
 6. Your server will be available at: `https://scriptorian.onrender.com/sse`
