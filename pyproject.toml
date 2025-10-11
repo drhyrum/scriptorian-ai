@@ -1,0 +1,30 @@
+[project]
+name = "scriptorian"
+version = "0.1.0"
+description = "MCP server for scripture study with semantic and exact search capabilities"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=0.9.0",
+    "numpy>=1.24.0",
+    "sentence-transformers>=2.2.0",
+    "chromadb>=0.4.0",
+    "torch>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+]
+server = [
+    "uvicorn>=0.27.0",
+    "starlette>=0.36.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

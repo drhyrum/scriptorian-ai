@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "scriptorian": {
+      "command": "/Users/hyrum/src/scriptorian/.venv/bin/python",
+      "args": ["-m", "scriptorian.server"],
+      "cwd": "/Users/hyrum/src/scriptorian",
+      "env": {
+        "PYTHONPATH": "/Users/hyrum/src/scriptorian/src"
+      }
+    }
+  }
+}
