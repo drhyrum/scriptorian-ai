@@ -2644,6 +2644,10 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
 ]
+server = [
+    { name = "starlette" },
+    { name = "uvicorn" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -2653,9 +2657,11 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
     { name = "sentence-transformers", specifier = ">=2.2.0" },
+    { name = "starlette", marker = "extra == 'server'", specifier = ">=0.36.0" },
     { name = "torch", specifier = ">=2.0.0" },
+    { name = "uvicorn", marker = "extra == 'server'", specifier = ">=0.27.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "server"]
 
 [[package]]
 name = "sentence-transformers"

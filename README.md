@@ -201,8 +201,8 @@ Index all scriptures for semantic search. Run this once before using `semantic_s
 ### Data Format
 
 Scripture data is stored in JSON format with the following structure:
-- `model/volumes.json`: Volume and book metadata
-- `model/scripture/`: Individual chapter files (e.g., `205.3.json` for 1 Nephi 3)
+- `data/volumes.json`: Volume and book metadata
+- `data/scripture/`: Individual chapter files (e.g., `205.3.json` for 1 Nephi 3)
 
 ### Semantic Search
 
@@ -260,11 +260,13 @@ scriptorian/
 │   ├── data_loader.py      # Scripture data loading
 │   ├── reference_parser.py # Reference parsing
 │   ├── search.py           # Search functionality
-│   └── server.py           # MCP server
-├── polymer-citation-index/  # Scripture data
-│   └── model/
-│       ├── volumes.json
-│       └── scripture/
+│   ├── server.py           # MCP server (stdio)
+│   └── server_sse.py       # MCP server (SSE/hosted)
+├── data/                    # Scripture data
+│   ├── volumes.json
+│   └── scripture/           # 1594 chapter files
+├── scripts/
+│   └── index_scriptures.py # Build vector database
 ├── tests/                   # Test files
 ├── pyproject.toml          # Project configuration
 └── README.md
