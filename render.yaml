@@ -3,7 +3,7 @@ services:
     name: scriptorian
     env: python
     buildCommand: "pip install -e .[server]"
-    startCommand: "uvicorn scriptorian.server_sse:app --host 0.0.0.0 --port $PORT"
+    startCommand: "python -m scriptorian.server_sse"
     envVars:
       - key: PYTHON_VERSION
         value: 3.10
