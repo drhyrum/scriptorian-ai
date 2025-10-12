@@ -2,8 +2,8 @@ services:
   - type: web
     name: scriptorian
     env: python
-    buildCommand: "pip install -e .[server]"
+    buildCommand: "pip install -e '.[server]'"
     startCommand: "python -m scriptorian.server_sse"
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10
+        value: "3.10"
