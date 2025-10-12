@@ -55,11 +55,18 @@ def create_app():
     async def handle_messages(request):
         """Handle POST messages."""
         return await sse.handle_post_message(request.scope, request.receive, request._send)
-    
+
+    async def health_check(request):
+        """Health check endpoint for deployment platforms."""
+        from starlette.responses import JSONResponse
+        return JSONResponse({"status": "healthy", "service": "scriptorian-mcp"})
+
     # Create Starlette app
     app = Starlette(
         debug=True,
         routes=[
+            Route("/", endpoint=health_check),
+            Route("/health", endpoint=health_check),
             Route("/sse", endpoint=handle_sse),
             Route("/messages", endpoint=handle_messages, methods=["POST"]),
         ],
