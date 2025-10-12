@@ -1,4 +1,5 @@
 {
+  "model": "ollama:qwen2.5:3b",
   "mcpServers": {
     "scriptorian": {
       "command": "/Users/hyrum/.local/bin/uv",
