@@ -3,7 +3,7 @@ services:
     name: scriptorian
     env: python
     buildCommand: "pip install uv && uv pip install -e '.[server]'"
-    startCommand: "uv run python -m scriptorian.server_sse"
+    startCommand: "python -m scriptorian.server_sse"
     envVars:
       - key: PYTHON_VERSION
         value: "3.10"
