@@ -18,7 +18,7 @@ This guide shows how to test the Scriptorian MCP server using cleverchatty-cli.
 ./test_mcp.sh local
 ```
 
-### Test Remote Server (SSE)
+### Test Remote Server (Streamable HTTP)
 ```bash
 ./test_mcp.sh remote
 ```
@@ -93,13 +93,13 @@ Tests the local stdio server running on your machine.
 ```
 
 ### test_mcp_remote.json
-Tests the remote SSE server deployed on Render.
+Tests the remote Streamable HTTP server deployed on Render.
 
 ```json
 {
   "mcpServers": {
     "scriptorian": {
-      "url": "https://scriptorian-ai.onrender.com/sse",
+      "url": "https://scriptorian-ai.onrender.com/mcp",
       "headers": []
     }
   }
@@ -123,7 +123,7 @@ uv run python -m scriptorian.server
 ### "Connection timeout" (remote)
 Check if the Render deployment is awake:
 ```bash
-curl https://scriptorian-ai.onrender.com/sse
+curl https://scriptorian-ai.onrender.com/health
 ```
 
 ## Alternative MCP Clients

@@ -29,7 +29,7 @@ if [ "$TEST_TYPE" = "local" ]; then
     echo ""
     go run github.com/gelembjuk/cleverchatty-cli@latest --config test_mcp_local.json
 elif [ "$TEST_TYPE" = "remote" ]; then
-    echo "Testing: REMOTE MCP server (SSE)"
+    echo "Testing: REMOTE MCP server (Streamable HTTP)"
     echo "Config:  test_mcp_remote.json"
     echo ""
     go run github.com/gelembjuk/cleverchatty-cli@latest --config test_mcp_remote.json
@@ -41,6 +41,6 @@ else
     echo ""
     echo "Examples:"
     echo "  ./test_mcp.sh local   # Test local stdio server"
-    echo "  ./test_mcp.sh remote  # Test remote SSE server"
+    echo "  ./test_mcp.sh remote  # Test remote Streamable HTTP server"
     exit 1
 fi
