@@ -424,50 +424,82 @@ class ScripturianServer:
                     text=f"No verses found for second reference: {reference2}"
                 )]
 
-            # Create text representations with verse references
-            text1_lines = []
-            for verse in verses1:
-                text1_lines.append(f"{verse.short_reference}: {verse.text}")
+            # Combine all verses into single text blocks
+            text1 = " ".join(verse.text for verse in verses1)
+            text2 = " ".join(verse.text for verse in verses2)
 
-            text2_lines = []
-            for verse in verses2:
-                text2_lines.append(f"{verse.short_reference}: {verse.text}")
+            # Split into words for word-by-word comparison
+            words1 = text1.split()
+            words2 = text2.split()
 
-            # Generate unified diff
-            diff = difflib.unified_diff(
-                text1_lines,
-                text2_lines,
-                fromfile=pretty_ref1,
-                tofile=pretty_ref2,
-                lineterm='',
-                n=context_lines
-            )
+            # Use SequenceMatcher for word-level diff
+            matcher = difflib.SequenceMatcher(None, words1, words2)
 
-            diff_output = '\n'.join(diff)
+            # Build formatted output
+            output_lines = []
+            additions = 0
+            deletions = 0
+            changes = []
+
+            for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+                if tag == 'equal':
+                    # Words that are the same
+                    continue
+                elif tag == 'delete':
+                    # Words only in first passage
+                    deleted_words = words1[i1:i2]
+                    deletions += len(deleted_words)
+                    changes.append(f"[-{' '.join(deleted_words)}-]")
+                elif tag == 'insert':
+                    # Words only in second passage
+                    inserted_words = words2[j1:j2]
+                    additions += len(inserted_words)
+                    changes.append(f"[+{' '.join(inserted_words)}+]")
+                elif tag == 'replace':
+                    # Words that changed
+                    deleted_words = words1[i1:i2]
+                    inserted_words = words2[j1:j2]
+                    deletions += len(deleted_words)
+                    additions += len(inserted_words)
+                    changes.append(f"[-{' '.join(deleted_words)}-] → [+{' '.join(inserted_words)}+]")
 
             # If no differences, say so
-            if not diff_output:
+            if not changes:
                 return [TextContent(
                     type="text",
                     text=f"**No differences found**\n\n{pretty_ref1} and {pretty_ref2} have identical text."
                 )]
 
-            # Format the output
+            # Format the output with inline highlighting
             output = f"**Comparing: {pretty_ref1} vs {pretty_ref2}**\n\n"
-            output += "```diff\n"
-            output += diff_output
-            output += "\n```\n\n"
 
-            # Add summary statistics
-            additions = diff_output.count('\n+') - 1  # Subtract header line
-            deletions = diff_output.count('\n-') - 1  # Subtract header line
-            output += f"**Summary:** {additions} addition(s), {deletions} deletion(s)\n\n"
+            # Show detailed word-by-word diff
+            output += "**Changes:**\n\n"
+            for change in changes:
+                output += f"• {change}\n"
+
+            output += f"\n**Summary:** {additions} word(s) added, {deletions} word(s) removed\n\n"
+
+            # Show full text with inline markup
+            output += "**Full text comparison:**\n\n"
+            result_parts = []
+            for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+                if tag == 'equal':
+                    result_parts.append(' '.join(words1[i1:i2]))
+                elif tag == 'delete':
+                    result_parts.append(f"**[-{' '.join(words1[i1:i2])}-]**")
+                elif tag == 'insert':
+                    result_parts.append(f"**[+{' '.join(words2[j1:j2])}+]**")
+                elif tag == 'replace':
+                    result_parts.append(f"**[-{' '.join(words1[i1:i2])}-]** → **[+{' '.join(words2[j1:j2])}+]**")
+
+            output += ' '.join(result_parts) + "\n\n"
 
             # Add legend
             output += "**Legend:**\n"
-            output += "- Lines starting with `-` are in the first passage but not the second\n"
-            output += "- Lines starting with `+` are in the second passage but not the first\n"
-            output += "- Lines starting with ` ` (space) are common to both\n"
+            output += "- `[-text-]` = removed from first passage\n"
+            output += "- `[+text+]` = added in second passage\n"
+            output += "- `[-old-] → [+new+]` = replacement\n"
 
             return [TextContent(type="text", text=output)]
 
