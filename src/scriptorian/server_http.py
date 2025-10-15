@@ -82,7 +82,7 @@ def create_app():
 
     async def handle_http(request):
         """Handle HTTP POST, GET, and DELETE requests."""
-        await transport.handle_request(
+        return await transport.handle_request(
             request.scope,
             request.receive,
             request._send
