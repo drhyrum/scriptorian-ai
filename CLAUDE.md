@@ -17,7 +17,7 @@ This is a production-ready MCP server that provides:
 scriptorian/
 ├── src/scriptorian/
 │   ├── server.py          # Main MCP server (stdio transport)
-│   ├── server_sse.py      # SSE server for hosted deployment
+│   ├── server_http.py     # Streamable HTTP server for hosted deployment
 │   ├── data_loader.py     # Scripture data loading
 │   ├── reference_parser.py # Natural language reference parser
 │   └── search.py          # Exact and semantic search
@@ -38,8 +38,8 @@ scriptorian/
 # Run the stdio server (for Claude Desktop)
 uv run python -m scriptorian.server
 
-# Run the SSE server (for hosted deployment)
-uv run python -m scriptorian.server_sse
+# Run the Streamable HTTP server (for hosted deployment)
+uv run python -m scriptorian.server_http
 
 # Run tests
 uv run pytest
@@ -55,6 +55,7 @@ uv run python scripts/index_scriptures.py
 3. **exact_search** - Exact string matching across all scriptures
 4. **semantic_search** - AI-powered semantic search (requires indexing)
 5. **index_scriptures** - Build vector database for semantic search
+6. **compare_scripture** - Compare two scripture passages and show differences using unified diff format
 
 ### Data Format
 
@@ -67,7 +68,7 @@ Scripture data is in JSON format:
 
 - `SCRIPTORIAN_DATA_PATH` - Custom path to scripture data (default: `./data`)
 - `SCRIPTORIAN_VECTOR_DB_PATH` - Custom path to vector DB (default: `./vector_db`)
-- `PORT` - Port for SSE server (default: 8000)
+- `PORT` - Port for HTTP server (default: 8000)
 
 ## Deployment
 
@@ -76,8 +77,13 @@ This server supports two deployment modes:
 ### Local (stdio)
 For Claude Desktop and local use. Uses standard input/output for MCP communication.
 
-### Hosted (SSE)
-For web deployment (Railway, Render, etc.). Uses Server-Sent Events over HTTP.
+### Hosted (Streamable HTTP)
+For web deployment (Railway, Render, AWS Lambda, etc.). Uses the Streamable HTTP transport (MCP protocol 2025-03-26+):
+- Better scalability with stateless server support
+- Bidirectional communication over standard HTTP
+- Optional session management with secure session IDs
+- No requirement for long-lived connections
+- Works seamlessly with load balancers and serverless platforms
 
 See `DEPLOYMENT.md` for detailed deployment instructions.
 

@@ -1,8 +1,9 @@
 """MCP server for scripture study."""
 
 import json
+import difflib
 from pathlib import Path
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Tuple
 
 from mcp.server import Server
 from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
@@ -149,6 +150,34 @@ class ScripturianServer:
                             }
                         }
                     }
+                ),
+                Tool(
+                    name="compare_scripture",
+                    description=(
+                        "Compare two scripture passages and show their differences. "
+                        "Useful for comparing parallel passages (e.g., Matthew 5 vs 3 Nephi 12), "
+                        "similar texts (e.g., sacramental prayers), or different versions. "
+                        "Returns a unified diff showing additions, deletions, and changes."
+                    ),
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "reference1": {
+                                "type": "string",
+                                "description": "First scripture reference (e.g., 'Moroni 4:3', 'Matthew 5')"
+                            },
+                            "reference2": {
+                                "type": "string",
+                                "description": "Second scripture reference (e.g., 'D&C 20:77', '3 Nephi 12')"
+                            },
+                            "context_lines": {
+                                "type": "integer",
+                                "description": "Number of context lines to show around differences",
+                                "default": 3
+                            }
+                        },
+                        "required": ["reference1", "reference2"]
+                    }
                 )
             ]
 
@@ -166,6 +195,8 @@ class ScripturianServer:
                     return await self._semantic_search(arguments)
                 elif name == "index_scriptures":
                     return await self._index_scriptures(arguments)
+                elif name == "compare_scripture":
+                    return await self._compare_scripture(arguments)
                 else:
                     return [TextContent(
                         type="text",
@@ -334,6 +365,121 @@ class ScripturianServer:
             return [TextContent(
                 type="text",
                 text=f"Indexing error: {str(e)}"
+            )]
+
+    def _fetch_verses_for_reference(self, reference: str) -> Tuple[List[Verse], str]:
+        """Helper method to fetch verses for a reference.
+
+        Returns:
+            Tuple of (verses list, pretty reference string)
+        """
+        parsed = self.parser.parse(reference)
+        if not parsed.valid:
+            raise ValueError(f"Invalid reference: {parsed.error}")
+
+        all_verses = []
+        for book_ref in parsed.references:
+            book = self.loader.get_book_by_abbr(book_ref.book)
+            if not book:
+                continue
+
+            for chapter in book_ref.chapters:
+                for ch in range(chapter.start, chapter.end + 1):
+                    verses = self.loader.load_scripture_verses(book.id, ch)
+
+                    if chapter.verses:
+                        # Filter to specific verses
+                        for verse_seg in chapter.verses:
+                            filtered = [
+                                v for v in verses
+                                if verse_seg.start <= v.verse <= verse_seg.end
+                            ]
+                            all_verses.extend(filtered)
+                    else:
+                        # All verses in chapter
+                        all_verses.extend(verses)
+
+        return all_verses, parsed.pretty_string
+
+    async def _compare_scripture(self, args: Dict[str, Any]) -> List[TextContent]:
+        """Compare two scripture passages and show their differences."""
+        reference1 = args.get("reference1", "")
+        reference2 = args.get("reference2", "")
+        context_lines = args.get("context_lines", 3)
+
+        try:
+            # Fetch both passages
+            verses1, pretty_ref1 = self._fetch_verses_for_reference(reference1)
+            verses2, pretty_ref2 = self._fetch_verses_for_reference(reference2)
+
+            if not verses1:
+                return [TextContent(
+                    type="text",
+                    text=f"No verses found for first reference: {reference1}"
+                )]
+
+            if not verses2:
+                return [TextContent(
+                    type="text",
+                    text=f"No verses found for second reference: {reference2}"
+                )]
+
+            # Create text representations with verse references
+            text1_lines = []
+            for verse in verses1:
+                text1_lines.append(f"{verse.short_reference}: {verse.text}")
+
+            text2_lines = []
+            for verse in verses2:
+                text2_lines.append(f"{verse.short_reference}: {verse.text}")
+
+            # Generate unified diff
+            diff = difflib.unified_diff(
+                text1_lines,
+                text2_lines,
+                fromfile=pretty_ref1,
+                tofile=pretty_ref2,
+                lineterm='',
+                n=context_lines
+            )
+
+            diff_output = '\n'.join(diff)
+
+            # If no differences, say so
+            if not diff_output:
+                return [TextContent(
+                    type="text",
+                    text=f"**No differences found**\n\n{pretty_ref1} and {pretty_ref2} have identical text."
+                )]
+
+            # Format the output
+            output = f"**Comparing: {pretty_ref1} vs {pretty_ref2}**\n\n"
+            output += "```diff\n"
+            output += diff_output
+            output += "\n```\n\n"
+
+            # Add summary statistics
+            additions = diff_output.count('\n+') - 1  # Subtract header line
+            deletions = diff_output.count('\n-') - 1  # Subtract header line
+            output += f"**Summary:** {additions} addition(s), {deletions} deletion(s)\n\n"
+
+            # Add legend
+            output += "**Legend:**\n"
+            output += "- Lines starting with `-` are in the first passage but not the second\n"
+            output += "- Lines starting with `+` are in the second passage but not the first\n"
+            output += "- Lines starting with ` ` (space) are common to both\n"
+
+            return [TextContent(type="text", text=output)]
+
+        except ValueError as e:
+            return [TextContent(
+                type="text",
+                text=str(e)
+            )]
+        except Exception as e:
+            return [TextContent(
+                type="text",
+                text=f"Comparison error: {str(e)}"
             )]
 
     def run(self):

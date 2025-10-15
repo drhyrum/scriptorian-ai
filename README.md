@@ -93,7 +93,7 @@ Replace `/path/to/scriptorian` with your actual installation path.
 {
   "mcpServers": {
     "scriptorian": {
-      "url": "https://scriptorian.ai/sse"
+      "url": "https://scriptorian.ai/mcp"
     }
   }
 }
@@ -189,6 +189,31 @@ Index all scriptures for semantic search. Run this once before using `semantic_s
 
 **Note:** Initial indexing may take several minutes.
 
+#### 6. `compare_scripture`
+
+Compare two scripture passages and show their differences using a unified diff format.
+
+**Parameters:**
+- `reference1` (string, required): First scripture reference (e.g., "Moroni 4:3", "Matthew 5")
+- `reference2` (string, required): Second scripture reference (e.g., "D&C 20:77", "3 Nephi 12")
+- `context_lines` (integer, optional): Number of context lines around differences (default: 3)
+
+**Example:**
+```json
+{
+  "reference1": "Moroni 4:3",
+  "reference2": "D&C 20:77",
+  "context_lines": 3
+}
+```
+
+**Returns:** Unified diff showing additions, deletions, and changes between the two passages.
+
+**Use Cases:**
+- Compare parallel passages (e.g., Sermon on the Mount in Matthew 5 vs 3 Nephi 12)
+- Analyze similar texts (e.g., sacramental prayers)
+- Study textual variations between different scripture books
+
 ## Architecture
 
 ### Components
@@ -261,7 +286,7 @@ scriptorian/
 │   ├── reference_parser.py # Reference parsing
 │   ├── search.py           # Search functionality
 │   ├── server.py           # MCP server (stdio)
-│   └── server_sse.py       # MCP server (SSE/hosted)
+│   └── server_http.py      # MCP server (Streamable HTTP/hosted)
 ├── data/                    # Scripture data
 │   ├── volumes.json
 │   └── scripture/           # 1594 chapter files
